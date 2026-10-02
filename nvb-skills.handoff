@@ -1,0 +1,133 @@
+# Handoff : famille de skills nvb (« no vibe coding »)
+
+Date : 2026-10-02
+Prochaine session : **création des skills** (plugin Claude Code `nvb`).
+
+## Contexte
+
+- Source d'inspiration : `C:\Users\BenjaminMoiroud\Downloads\presentation.html` (deck « Stop Vibe Coding: AI Development Workflow », 17 slides). Slides clés : 8 (rigueur adaptée à l'impact), 9 (Requirements : PRD, research.md, prototype jetable), 10 (Design : base de données, architecture, authentification, modèle de données, ADR, « hard to undo »), 11 (Plan : tâches bornées, dépendances, parallel agents), 12 (brief de l'agent : 5 éléments), 13 (self-review ≠ preuve indépendante).
+- Session menée avec `/stress-idea`, **sans** le sous-mode `schema`. Aucun contrat d'entrée formel n'a donc été défini pour les skills, et il reste à écrire pendant la création.
+- Consigne de l'utilisateur : concevoir **comme si aucun skill n'existait**. Ne pas réutiliser ni dépendre des skills déjà installés (`technical-design`, `design`, `to-adr`, `new-architecture`, `architecture-to-ticket`, etc.), même si certains recouvrent le sujet.
+- L'utilisateur n'a pas explicitement répondu « je confirme » au récapitulatif final, mais a enchaîné directement sur `/handoff` pour passer à la création. Il faut le traiter comme un accord, et revalider en une ligne en début de session si un doute apparaît.
+- Rien n'a encore été écrit : ni code, ni fichier de skill, ni ADR.
+
+## Périmètre
+
+Phases **Requirements, Design et Plan** (le Plan a été ajouté en cours de session). Build, Review, Deploy et Monitor sont hors périmètre, sauf les points de contact listés plus bas.
+
+## Les 7 skills (plugin `nvb`, avec `references/` commun)
+
+| Skill | Rôle |
+|---|---|
+| `nvb-triage` | Point d'entrée et tableau de bord. Classe, planifie la chaîne, puis à chaque appel affiche l'état de chaque livrable (`absent` / `draft` / questions ouvertes / `approved` / `stale`) et la prochaine action. **N'exécute jamais** les autres skills. Attribue le numéro d'initiative. |
+| `nvb-prd` | PRD par interview. |
+| `nvb-research` | `research.md` avec sources vérifiées. |
+| `nvb-prototype` | Prototype jetable. Le livrable est l'enseignement, pas le code. |
+| `nvb-design` | Delta de design par initiative, plus le mode **amorçage** (dépôt existant) et le mode **report** (delta → système). |
+| `nvb-adr` | Décisions système, test d'éligibilité, remplacement ou révision. |
+| `nvb-plan` | `plan.md` puis les fichiers de tâche. |
+
+La contestation des hypothèses (« challenge assumptions ») n'est pas un skill : elle est **intégrée à chaque skill** sous forme d'interview. Les conventions (`CLAUDE.md` / `CONVENTIONS.md`) sont hors périmètre (phase Build).
+
+## Règles transverses (à placer dans `references/` commun, jamais recopiées)
+
+- **R1 Emplacement** : Markdown dans le dépôt, sous `docs/nvb/`. C'est la source de vérité unique, lue par l'agent au Build. Pas d'outil de suivi en v1.
+- **R2 Approbation** : en-tête YAML `status: draft | approved`, `approved_by`, `approved_on`, `version`. **Seule la personne écrit `approved`**. Les skills vérifient seulement. Chaque skill refuse de démarrer si son amont n'est pas `approved`.
+- **R3 Interview d'abord** : une question à la fois, avec une recommandation argumentée. Le livrable ne contient **que ce qui a été dit**. Tout point non tranché devient une *question ouverte*, et une question ouverte bloque l'approbation.
+- **R4 Sécurité obligatoire** : rubrique sécurité dans le PRD (`SEC`) et dans le design. Une rubrique vide bloque l'approbation. Une rubrique non pertinente porte la mention « sans objet, parce que… », jamais une suppression.
+- **R5 Identifiants** : `REQ`, `SEC`, `NFR` (PRD), `RES` (recherche), `PRO` (prototype), `T-xx` (tâches), `ADR-xxxx` (système). Initiative : `N-007-slug`. Le numéro est stable et jamais réutilisé, le slug est cosmétique. Les références entre initiatives sont qualifiées (`N-007/REQ-03`). Le numéro est attribué en lisant `docs/nvb/` et les branches distantes.
+- **R6 Traçabilité** : la table de couverture se trouve dans le livrable **aval**. L'amont approuvé n'est jamais modifié. Une exigence non couverte bloque l'approbation de l'aval.
+- **R7 Changement** : chaque livrable a une `version`, et l'aval enregistre `covers: prd@2`, `system@N`, etc. Quand l'amont change, l'aval passe à `stale`, et la revue porte **seulement sur les identifiants modifiés ou ajoutés**.
+- **R8 Langue** : une langue par dépôt dans `docs/nvb/config.md` (`language: en | fr`, anglais par défaut), demandée une fois. Si l'interview est dans une autre langue, chaque exigence est relue dans la langue de l'interview avant d'être rédigée.
+- **R9 Reclassement** : tout skill qui découvre un fait répondant « oui » à une question de triage jusque-là répondue « non » ouvre une question ouverte de reclassement, qui bloque son livrable. `nvb-triage` crée alors une nouvelle version de `triage.md`.
+
+## Détail par skill
+
+### nvb-triage
+- Trois familles de questions fermées, chacune avec un effet écrit :
+  - **Sécurité** (données personnelles ou sensibles ; authentification, autorisations ou permissions ; nouvelle exposition : endpoint, port, fichier importé ; secrets ou clés) → plancher « feature complexe », `SEC` obligatoire, ADR imposé.
+  - **Irréversibilité** (schéma ou migration de données ; format ou contrat publié : API, fichier, message ; suppression de données ou de fonctionnalité) → plancher « feature complexe », ADR imposé.
+  - **Inconnu** (API, bibliothèque ou technologie jamais utilisée → `research` ; incertitude sur la faisabilité ou l'interaction → `prototype` ; plusieurs composants ou équipes → envisager « nouveau produit »).
+- Niveaux et livrables requis :
+
+  | Niveau | PRD | Design | ADR | Plan | Tâches |
+  |---|---|---|---|---|---|
+  | Bug fix | – | – | – | – | 1 tâche directe |
+  | Petite feature | – | – | – | – | 1 tâche directe, avec section « exigences » intégrée |
+  | Feature complexe | ✔ | ✔ | si test ADR | ✔ | N |
+  | Nouveau produit | ✔ | ✔ | si test ADR | ✔ | N, plus revue adverse du PRD |
+
+  `research` et `prototype` ne sont déclenchés **que** par les questions « inconnu », jamais par le niveau.
+- L'agent propose le niveau, la personne confirme. Résultat dans `docs/nvb/<N-xxx-slug>/triage.md`.
+- **Dérogation** sous le plancher : autorisée mais tracée (question, justification écrite par la personne, nom), visible pendant toute la vie de l'initiative. Une dérogation sur une question de sécurité exige au moins un `SEC` dans la tâche directe.
+- État « prêt pour Plan » quand tous les livrables requis sont `approved` et qu'aucun n'est `stale`.
+- Peut **afficher** des vagues de parallélisme déduites des dépendances, sans les écrire.
+
+### nvb-prd
+Rubriques : contexte et problème ; utilisateurs et acteurs ; `REQ-xx` avec **critère d'acceptation testable** ; `SEC-xx` (obligatoire) ; `NFR-xx` (seulement celles qui ont été exprimées) ; contraintes ; hors périmètre explicite ; critères de succès ; questions ouvertes. Pas de user stories ni de personas détaillés.
+
+### nvb-research
+Chaque `RES-xx` contient l'URL ou le chemin, la **version** concernée, la date de consultation et une **citation exacte** extraite de la source. Sans citation, la conclusion est notée « non vérifiée » et ne peut pas être citée par le design. Si une preuve exécutable est nécessaire, la recherche produit une question pour le prototype.
+
+### nvb-prototype
+La **question** est écrite d'abord. Le code est écrit sur une branche `nvb/proto/<N-xxx-slug>` qui n'est **jamais fusionnée**. `prototype.md` (sur la branche principale) contient la réponse, les conclusions `PRO-xx`, le hash du commit, les commandes exécutées et leurs sorties, si bien que la branche peut être supprimée sans perte de preuve. Le code n'est jamais repris tel quel.
+
+### nvb-design
+- **Deux niveaux** : `docs/nvb/system/` (architecture, modèle de données, modèle de sécurité, ADR), versionné `system@N` ; `docs/nvb/<initiative>/design.md` contient le **delta** et cite `system@N`.
+- Rubriques du delta : vue d'ensemble et diagramme Mermaid ; architecture et composants ; données et stockage (schéma, migration) ; interfaces (API, contrats, formats) ; sécurité (authentification et autorisations, frontières de confiance, secrets, validation des entrées, données sensibles) ; erreurs et cas limites ; stratégie de vérification (comment chaque `REQ` / `SEC` est testée) ; liens vers les ADR ; **exploitation**, limitée à ce que le design impose aux phases Deploy et Monitor ; table de couverture ; questions ouvertes.
+- **Mode amorçage** (dépôt existant) : ne documente que les sections du système touchées par l'initiative. Chaque affirmation porte une preuve `chemin:ligne`. Ce qui n'est pas prouvable devient une question ouverte, le reste est marqué « non documenté ». Le tout est approuvé comme `system@1`.
+- **Mode report** : quand toutes les tâches de l'initiative sont `done`, le delta est reporté dans `system/` avec approbation de la personne, et la version passe à `system@N+1`. Seuls les éléments qui citent les sections touchées deviennent `stale`. Entre l'approbation du design et le report, le delta est annoncé dans `docs/nvb/system/pending.md` (initiative, sections touchées), et `nvb-design` signale les deltas en cours qui touchent les mêmes sections.
+
+### nvb-adr
+- Éligibilité (les trois conditions sont requises) : difficile ou coûteux à défaire ; au moins une vraie alternative envisagée ; un pourquoi et des pourquoi pas écrits. Ce qui échoue reste dans le design.
+- **Imposé** par tout « oui » du triage en sécurité ou irréversibilité.
+- Cycle de vie : un ADR `accepted` est immuable sur le fond. Si la décision change, un nouvel ADR est créé avec `superseded_by` / `supersedes` (lien dans les deux sens), sans réutilisation d'identifiant, et tout ce qui cite l'ancien passe à `stale`. Une correction sans changement de décision passe à `revised`, avec une entrée d'historique et sans propagation.
+
+### nvb-plan
+- `plan.md` (liste ordonnée, dépendances, couverture) est **approuvé**. Après approbation seulement, un fichier par tâche est généré dans `docs/nvb/<initiative>/tasks/T-01-*.md`. Le plan approuvé n'est jamais modifié pour suivre l'avancement.
+- **Tâche bornée** (les quatre conditions sont requises) : (a) un résultat observable unique, vérifiable par un test ou une commande ; (b) un périmètre de fichiers ou de composants annoncé ; (c) relisible en une seule revue ; (d) couvre au moins un `REQ`, `SEC` ou élément du design, ou est marquée « technique » avec sa justification. Plafond **indicatif** (environ 300 lignes ou 5 fichiers) : s'il est dépassé, le skill pose une question de redécoupage.
+- **Parallélisme** : seulement si les tâches n'ont pas de dépendance l'une envers l'autre **et** que leurs périmètres de fichiers sont disjoints. Une interface partagée est figée d'abord par une tâche dédiée, dont les autres dépendent.
+- **Contenu d'une tâche** : objectif ; identifiants couverts ; à lire (rubriques précises du design et ADR, pas le document entier) ; périmètre et hors périmètre ; critères de réussite exécutables ; à éviter (interdits issus du design, des ADR et des `SEC`) ; `depends_on` ; statut ; **empreinte des sources** (`design@2`…) → `stale` si une source change.
+- **Couverture du plan** : chaque `REQ` / `SEC` est **réalisée et vérifiée** par au moins une tâche. Les contraintes d'exploitation sont reprises par une tâche ou transmises explicitement. Une **revue adverse** (réalisation partielle, tâche sans test, dépendance circulaire) transforme les trous en questions ouvertes, qui bloquent l'approbation.
+- **Niveaux bas** : une seule tâche directe, sans `plan.md`. Pour un bug : comportement attendu, reproduction, test qui échoue avant et passe après. La condition (d) est remplie par une référence au triage.
+- **Statuts d'exécution** : `todo` → `in-progress` → `verified` (posé par l'agent quand les critères passent, sortie consignée dans la tâche) → `done` (posé **seulement par la personne** après revue). Seul `done` débloque les tâches dépendantes.
+- **Contrôle au Build** : une tâche dont le diff sort de son périmètre annoncé passe en reclassement au lieu de `verified`.
+- Les identifiants servent de **contrat** avec le Build : une tâche qui ne cite rien est hors design. Pas de `brief.md` résumé (il divergerait des sources).
+
+## Arborescence prévue dans le dépôt cible
+
+```
+docs/nvb/
+  config.md                      # language
+  system/                        # system@N : architecture, données, sécurité
+    pending.md
+    decisions/ADR-0001-*.md
+  N-007-auth-tokens/
+    triage.md
+    prd.md
+    research.md
+    prototype.md
+    design.md                    # delta, covers system@N
+    plan.md
+    tasks/T-01-*.md
+```
+
+## Reporté (hors v1)
+
+- **Contrôles mécaniques** (scripts ou hooks) : en-têtes YAML, couverture, `stale`, conflits de numéros d'initiative. En v1, ces contrôles sont faits par l'agent en lisant. C'est le **point le plus faible** connu du système (l'agent contrôle son propre travail). Structurer `references/` et les formats pour qu'un script puisse les valider plus tard (YAML strict, identifiants réguliers).
+- Miroir unidirectionnel dépôt → outil de suivi (ADO, GitHub Issues…).
+- Profils de conformité (par exemple `profile: iec62443`) au-delà du plancher sécurité générique.
+- Liste de questions de triage extensible par dépôt.
+
+## Hypothèses signalées et non tranchées
+
+- **Une seule personne** est souvent à la fois celle qui répond à l'interview et celle qui approuve. R2 garantit qu'une personne décide, pas qu'un deuxième regard a lieu. Branche à rouvrir si une séparation des rôles est voulue.
+- La frontière « feature complexe » / « nouveau produit » est mince (seulement la revue adverse du PRD). L'utilisateur a choisi de garder les quatre niveaux.
+
+## Pistes pour la session de création
+
+1. Définir la structure du plugin : `.claude-plugin/plugin.json`, `skills/nvb-*/SKILL.md`, `references/` commun (règles R1 à R9, gabarits PRD, design, ADR, plan, tâche, triage, questions de triage). Vérifier comment un skill de plugin référence un fichier partagé (via le skill `plugin-authoring` ou l'agent `claude-code-guide`).
+2. Écrire d'abord `references/` (règles et gabarits), puis `nvb-triage` (qui conditionne tous les autres), puis suivre l'ordre de la chaîne : prd → research → prototype → adr → design → plan.
+3. Pour chaque skill, définir le **contrat d'entrée** (non fait dans cette session, sous-mode `schema` non utilisé) et la **description de déclenchement**.
+4. Le skill `anthropic-skills:skill-creator` peut servir à rédiger et évaluer les skills.
+5. Ne pas écrire `approved` dans les gabarits ni dans les exemples : seule la personne le pose (R2).

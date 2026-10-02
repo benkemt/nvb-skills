@@ -1,0 +1,7 @@
+{
+  "name": "nvb",
+  "version": "0.1.0",
+  "description": "No vibe coding: Requirements, Design and Plan phases as reviewable Markdown deliverables under docs/nvb/ (triage, PRD, research, prototype, design, ADR, plan, tasks), produced by interview and approved by a person.",
+  "author": { "name": "Benjamin Moiroud" },
+  "keywords": ["prd", "design", "adr", "planning", "spec", "workflow"]
+}

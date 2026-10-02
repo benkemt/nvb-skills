@@ -1,0 +1,12 @@
+{
+  "name": "nvb-local",
+  "owner": { "name": "Benjamin Moiroud" },
+  "description": "Local marketplace for the nvb plugin.",
+  "plugins": [
+    {
+      "name": "nvb",
+      "source": "./",
+      "description": "No vibe coding: Requirements, Design and Plan deliverables approved by a person."
+    }
+  ]
+}
