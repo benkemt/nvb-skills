@@ -1,0 +1,888 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BMad face au cycle de vie</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Public+Sans:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout : une bande du cycle de vie en 7 étapes (la colonne vertébrale de la présentation),
+   puis les principes, puis une fiche par skill utilisée, puis les manques et la synthèse. */
+:root {
+  --bg: #f3f5f8;
+  --surface: #ffffff;
+  --ink: #17202c;
+  --muted: #5a6677;
+  --line: #d8dee7;
+  --accent: #2448c9;
+  --accent-soft: #e4eafb;
+  --ok: #1d7a4b;
+  --ok-soft: #dff2e7;
+  --warn: #9a6200;
+  --warn-soft: #fbefd6;
+  --bad: #b3261e;
+  --bad-soft: #fbe3e1;
+  --plus: #6b3fb8;
+  --plus-soft: #eee6fb;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Public Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #10151d; --surface: #18202b; --ink: #e6ebf2; --muted: #9aa6b6; --line: #2b3646;
+    --accent: #8aa6ff; --accent-soft: #1f2b4d;
+    --ok: #6fd39c; --ok-soft: #173326; --warn: #f0b54d; --warn-soft: #3a2b10;
+    --bad: #ff8a80; --bad-soft: #3d1a18; --plus: #c3a4ff; --plus-soft: #2c2142;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #10151d; --surface: #18202b; --ink: #e6ebf2; --muted: #9aa6b6; --line: #2b3646;
+  --accent: #8aa6ff; --accent-soft: #1f2b4d;
+  --ok: #6fd39c; --ok-soft: #173326; --warn: #f0b54d; --warn-soft: #3a2b10;
+  --bad: #ff8a80; --bad-soft: #3d1a18; --plus: #c3a4ff; --plus-soft: #2c2142;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 400 1rem/1.6 var(--f-body);
+  padding-inline: 16px;
+  padding-block: 0 4rem;
+}
+.wrap { max-width: 1120px; margin-inline: auto; display: grid; gap: 3.5rem; }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0; line-height: 1.15; }
+h1 { font-size: clamp(2rem, 5vw, 3.4rem); font-weight: 800; letter-spacing: -0.02em; }
+h2 { font-size: clamp(1.4rem, 3vw, 1.9rem); font-weight: 700; }
+h3 { font-size: 1.2rem; font-weight: 700; }
+p { margin: 0; }
+code, .mono { font-family: var(--f-mono); font-size: 0.86em; }
+code { background: var(--accent-soft); color: var(--ink); padding: 0.05em 0.35em; border-radius: 4px; }
+.eyebrow {
+  font: 600 0.75rem/1 var(--f-mono); text-transform: uppercase; letter-spacing: 0.12em; color: var(--accent);
+}
+.lede { color: var(--muted); max-width: 65ch; font-size: 1.08rem; }
+section { display: grid; gap: 1.25rem; }
+.section-head { display: grid; gap: 0.5rem; }
+
+/* En-tête */
+header.top { padding-block: 3rem 0; display: grid; gap: 1rem; }
+.chain { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-top: 0.5rem; }
+.chain span.node {
+  font: 600 0.85rem/1 var(--f-mono); padding: 0.5rem 0.7rem; border: 1px solid var(--line);
+  background: var(--surface); border-radius: 6px;
+}
+.chain span.arrow { color: var(--muted); font-family: var(--f-mono); }
+.meta { color: var(--muted); font-size: 0.9rem; }
+
+/* Pastilles de couverture */
+.pill {
+  display: inline-flex; align-items: center; gap: 0.35rem; white-space: nowrap;
+  font: 600 0.72rem/1 var(--f-mono); text-transform: uppercase; letter-spacing: 0.06em;
+  padding: 0.35rem 0.55rem; border-radius: 999px;
+}
+.pill::before { content: ""; width: 0.5rem; height: 0.5rem; border-radius: 50%; background: currentColor; }
+.pill.ok { color: var(--ok); background: var(--ok-soft); }
+.pill.warn { color: var(--warn); background: var(--warn-soft); }
+.pill.bad { color: var(--bad); background: var(--bad-soft); }
+.pill.plus { color: var(--plus); background: var(--plus-soft); }
+
+/* Bande du cycle de vie */
+.lifecycle {
+  display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0;
+  border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--surface);
+}
+.stage { display: grid; grid-template-rows: auto auto 1fr auto; gap: 0.6rem; padding: 1rem 0.9rem; border-right: 1px solid var(--line); min-width: 0; }
+.stage:last-child { border-right: 0; }
+.stage .num { font: 600 0.75rem/1 var(--f-mono); color: var(--muted); }
+.stage h3 { font-size: 1.05rem; }
+.stage ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.3rem; align-content: flex-start; }
+.stage li { font: 400 0.74rem/1.3 var(--f-mono); padding: 0.25rem 0.4rem; background: var(--accent-soft); border-radius: 4px; overflow-wrap: anywhere; }
+.stage li.none { background: transparent; color: var(--muted); font-style: italic; padding-inline: 0; }
+.stage.gap { background: repeating-linear-gradient(135deg, transparent 0 8px, var(--bad-soft) 8px 9px); }
+.legend { display: flex; flex-wrap: wrap; gap: 0.75rem 1.25rem; align-items: center; color: var(--muted); font-size: 0.88rem; }
+
+/* Tableaux */
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; min-width: 640px; }
+th, td { text-align: left; vertical-align: top; padding: 0.8rem 1rem; border-bottom: 1px solid var(--line); }
+tr:last-child td { border-bottom: 0; }
+th { font: 600 0.72rem/1.2 var(--f-mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); background: var(--bg); }
+td:first-child { font-weight: 600; width: 30%; }
+
+/* Fiches par skill */
+.skills { display: grid; gap: 1rem; }
+.skill {
+  display: grid; grid-template-columns: 15rem minmax(0, 1fr); gap: 0;
+  border: 1px solid var(--line); border-radius: 10px; background: var(--surface); overflow: hidden;
+}
+.skill .id { padding: 1.1rem 1.2rem; border-right: 1px solid var(--line); display: grid; gap: 0.6rem; align-content: start; min-width: 0; }
+.skill .id .name { font: 600 1rem/1.3 var(--f-mono); color: var(--accent); overflow-wrap: anywhere; }
+.skill .id .stagep { font-size: 0.88rem; color: var(--muted); }
+.skill .id .path { font: 400 0.75rem/1.4 var(--f-mono); color: var(--muted); overflow-wrap: anywhere; }
+.skill .body { display: grid; grid-template-columns: 1fr 1fr; min-width: 0; }
+.col { padding: 1.1rem 1.2rem; display: grid; gap: 0.6rem; align-content: start; min-width: 0; }
+.col + .col { border-left: 1px solid var(--line); }
+.col .label { font: 600 0.72rem/1 var(--f-mono); text-transform: uppercase; letter-spacing: 0.1em; }
+.col.pro .label { color: var(--ok); }
+.col.con .label { color: var(--bad); }
+.col ul { margin: 0; padding-left: 1.1rem; display: grid; gap: 0.45rem; }
+.col li { font-size: 0.95rem; }
+.col li::marker { color: var(--muted); }
+
+/* Manques */
+.gaps { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 1rem; }
+.gapcard { border: 1px solid var(--line); border-top: 3px solid var(--bad); border-radius: 0 0 10px 10px; background: var(--surface); padding: 1.1rem 1.2rem; display: grid; gap: 0.5rem; align-content: start; }
+.gapcard.soft { border-top-color: var(--warn); }
+.gapcard p { color: var(--muted); font-size: 0.95rem; }
+
+/* Synthèse */
+.verdict { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--surface); }
+.verdict > div { padding: 1.3rem 1.3rem; display: grid; gap: 0.6rem; align-content: start; min-width: 0; }
+.verdict > div + div { border-left: 1px solid var(--line); }
+.verdict .big { font: 800 2.4rem/1 var(--f-display); font-variant-numeric: tabular-nums; }
+.verdict .plus .big { color: var(--plus); }
+.verdict .cost .big { color: var(--warn); }
+.verdict .miss .big { color: var(--bad); }
+.verdict p { font-size: 0.95rem; }
+footer { color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--line); padding-top: 1.25rem; }
+
+/* Onglets */
+.tabs { display: flex; flex-wrap: wrap; gap: 0.25rem; border-bottom: 1px solid var(--line); margin-top: 1rem; }
+.tabs button {
+  font: 600 0.95rem/1 var(--f-body); color: var(--muted); background: transparent; cursor: pointer;
+  border: 0; border-bottom: 3px solid transparent; padding: 0.85rem 1rem; margin-bottom: -1px;
+}
+.tabs button:hover { color: var(--ink); }
+.tabs button[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.panel { display: grid; gap: 3.5rem; }
+
+/* Pour aller plus loin */
+.filter { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.filter span { color: var(--muted); font-size: 0.9rem; margin-right: 0.25rem; }
+.filter button {
+  font: 600 0.82rem/1 var(--f-mono); cursor: pointer; padding: 0.5rem 0.8rem; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+}
+.filter button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+.stage-block { display: grid; gap: 1rem; }
+.stage-title { display: flex; align-items: baseline; gap: 0.75rem; flex-wrap: wrap; }
+.stage-title .num { font: 600 0.85rem/1 var(--f-mono); color: var(--accent); }
+.sub { font: 600 0.72rem/1 var(--f-mono); text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+.does td:first-child { font-family: var(--f-mono); font-size: 0.86rem; font-weight: 600; color: var(--accent); width: 22%; }
+.does td { font-size: 0.93rem; }
+.does .none td { color: var(--muted); font-style: italic; font-family: var(--f-body); font-weight: 400; }
+.ideas { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr)); gap: 1rem; }
+.idea {
+  border: 1px solid var(--line); border-radius: 10px; background: var(--surface);
+  padding: 1.1rem 1.2rem; display: grid; gap: 0.7rem; align-content: start; min-width: 0;
+}
+.idea .head { display: grid; gap: 0.45rem; }
+.idea .name { font: 600 0.98rem/1.3 var(--f-mono); color: var(--ink); overflow-wrap: anywhere; }
+.who { display: flex; gap: 0.3rem; flex-wrap: wrap; }
+.who b {
+  font: 600 0.7rem/1 var(--f-mono); text-transform: uppercase; letter-spacing: 0.06em;
+  padding: 0.3rem 0.45rem; border-radius: 4px;
+}
+.who .dev { color: var(--accent); background: var(--accent-soft); }
+.who .pm { color: var(--plus); background: var(--plus-soft); }
+.who .test { color: var(--ok); background: var(--ok-soft); }
+.idea dl { margin: 0; display: grid; gap: 0.55rem; }
+.idea dt { font: 600 0.7rem/1 var(--f-mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.idea dd { margin: 0.2rem 0 0; font-size: 0.93rem; }
+.idea dd ul { margin: 0.2rem 0 0; padding-left: 1.1rem; display: grid; gap: 0.2rem; }
+.idea .beyond { border-top: 1px dashed var(--line); padding-top: 0.6rem; }
+.idea .beyond dd { color: var(--ink); }
+.top3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); overflow: hidden; }
+.top3 > div { padding: 1.2rem 1.3rem; display: grid; gap: 0.5rem; align-content: start; min-width: 0; }
+.top3 > div + div { border-left: 1px solid var(--line); }
+.top3 .rank { font: 800 2.2rem/1 var(--f-display); color: var(--accent); font-variant-numeric: tabular-nums; }
+.top3 .name { font: 600 0.95rem/1.3 var(--f-mono); overflow-wrap: anywhere; }
+.top3 p { font-size: 0.93rem; color: var(--muted); }
+.empty-note { color: var(--muted); font-style: italic; font-size: 0.93rem; }
+
+@media (max-width: 960px) {
+  .lifecycle { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stage { border-bottom: 1px solid var(--line); }
+  .stage:nth-child(2n) { border-right: 0; }
+  .skill { grid-template-columns: 1fr; }
+  .skill .id { border-right: 0; border-bottom: 1px solid var(--line); }
+}
+@media (max-width: 640px) {
+  .lifecycle { grid-template-columns: 1fr; }
+  .stage { border-right: 0; }
+  .skill .body { grid-template-columns: 1fr; }
+  .col + .col { border-left: 0; border-top: 1px solid var(--line); }
+  .verdict { grid-template-columns: 1fr; }
+  .verdict > div + div { border-left: 0; border-top: 1px solid var(--line); }
+  .top3 { grid-template-columns: 1fr; }
+  .top3 > div + div { border-left: 0; border-top: 1px solid var(--line); }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <span class="eyebrow">Comparaison · initiative ado-wi-importer</span>
+    <h1>BMad face au cycle de vie « Stop Vibe Coding »</h1>
+    <p class="lede">Les skills BMad utilisées dans <code>wi-bmad</code>, rapprochées des 7 étapes et des principes de la présentation, avec les avantages et les inconvénients de chacune.</p>
+    <div class="chain" aria-label="Chaîne de traçabilité BMad">
+      <span class="node">forge</span><span class="arrow">→</span>
+      <span class="node">research</span><span class="arrow">→</span>
+      <span class="node">PRD</span><span class="arrow">→</span>
+      <span class="node">spec · CAP-N</span><span class="arrow">→</span>
+      <span class="node">architecture · AD-N</span><span class="arrow">→</span>
+      <span class="node">tickets.toml</span><span class="arrow">→</span>
+      <span class="node">plan → build</span>
+    </div>
+    <p class="meta">Sources : <span class="mono">presentation.html</span> (17 diapos) et <span class="mono">wi-bmad/_bmad-output/initiative-ado-wi-importer/</span>, 7 octobre 2026.</p>
+    <div class="tabs" role="tablist" aria-label="Sections de la page">
+      <button type="button" role="tab" id="tab-compare" aria-controls="panel-compare" aria-selected="true">Comparaison</button>
+      <button type="button" role="tab" id="tab-plus" aria-controls="panel-plus" aria-selected="false" tabindex="-1">Pour aller plus loin</button>
+    </div>
+  </header>
+
+  <div class="panel" id="panel-compare" role="tabpanel" aria-labelledby="tab-compare">
+
+  <section>
+    <div class="section-head">
+      <span class="eyebrow">Vue d'ensemble</span>
+      <h2>Les 7 étapes et ce que BMad y met</h2>
+      <p class="lede">BMad couvre les cinq premières étapes, et la revue mieux que la présentation. Pour le déploiement, il ne fournit que les décisions d'architecture. La surveillance n'a aucune skill.</p>
+    </div>
+    <div class="lifecycle">
+      <div class="stage">
+        <span class="num">01</span><h3>Requirements</h3>
+        <ul><li>forge-idea</li><li>deep-recon</li><li>prd</li><li>spec</li></ul>
+        <span class="pill ok">Fort</span>
+      </div>
+      <div class="stage">
+        <span class="num">02</span><h3>Design</h3>
+        <ul><li>architecture</li><li class="none">project-context non utilisé</li></ul>
+        <span class="pill ok">Fort</span>
+      </div>
+      <div class="stage">
+        <span class="num">03</span><h3>Plan</h3>
+        <ul><li>ticket</li></ul>
+        <span class="pill ok">Fort</span>
+      </div>
+      <div class="stage">
+        <span class="num">04</span><h3>Build</h3>
+        <ul><li>build · steps 1–3</li></ul>
+        <span class="pill ok">Fort</span>
+      </div>
+      <div class="stage">
+        <span class="num">05</span><h3>Review</h3>
+        <ul><li>build · step 4</li><li>checkpoint 1</li></ul>
+        <span class="pill plus">Au-delà</span>
+      </div>
+      <div class="stage">
+        <span class="num">06</span><h3>Deploy</h3>
+        <ul><li>architecture · décisions</li><li class="none">aucune exécution</li></ul>
+        <span class="pill warn">Partiel</span>
+      </div>
+      <div class="stage gap">
+        <span class="num">07</span><h3>Monitor</h3>
+        <ul><li class="none">aucune skill</li></ul>
+        <span class="pill bad">Absent</span>
+      </div>
+    </div>
+    <div class="legend">
+      <span class="pill ok">Fort</span> couvre ce que la présentation demande
+      <span class="pill plus">Au-delà</span> va plus loin que la présentation
+      <span class="pill warn">Partiel</span> couvert en partie
+      <span class="pill bad">Absent</span> rien dans BMad
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <span class="eyebrow">Principes transverses</span>
+      <h2>Ce que la présentation exige, et comment BMad y répond</h2>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Principe de la présentation</th><th>Réponse de BMad</th><th>État</th></tr></thead>
+        <tbody>
+          <tr><td>Adapter la rigueur à la tâche</td><td>Route <code>oneshot</code> ou <code>full</code>, revue <code>none</code>, <code>quick</code> ou <code>thorough</code>, <code>risk</code> par ticket. Un petit bug va directement à <code>bmad-build</code>.</td><td><span class="pill ok">Fort</span></td></tr>
+          <tr><td>Un humain approuve les décisions importantes</td><td>Checkpoint 1 du plan, bloc <code>&lt;frozen-after-approval&gt;</code> verrouillé, <code>hitl = true</code> sur les tickets.</td><td><span class="pill ok">Fort</span></td></tr>
+          <tr><td>Une tâche, un agent, des incréments relisibles</td><td>Un ticket donne un plan, et le plan va à un subagent sans contexte.</td><td><span class="pill ok">Fort</span></td></tr>
+          <tr><td>Briefer l'agent au lieu de lui lancer un prompt</td><td>Le plan reprend les cinq points du « good brief » : Intent, Design Notes, Tasks, Code Map, Never.</td><td><span class="pill ok">Fort</span></td></tr>
+          <tr><td>Garder la réflexion visible</td><td><code>.memlog.md</code>, Review Triage Log, Plan Change Log, <code>deferred-work.md</code>.</td><td><span class="pill ok">Fort</span></td></tr>
+          <tr><td>L'auto-revue n'est pas une preuve indépendante</td><td>Les reviewers sont des subagents sans contexte. Le Blind Hunter ne voit que le diff. Chaque constat est vérifié dans le code avant d'être retenu.</td><td><span class="pill plus">Au-delà</span></td></tr>
+          <tr><td>Vérifier la source avant de bâtir dessus</td><td>La recherche est documentée, mais rien n'impose d'essai réel. Il a fallu un spike (ticket 1) pour Q1 à Q4.</td><td><span class="pill warn">Partiel</span></td></tr>
+          <tr><td>Approbation avant la mise en production</td><td><code>bmad-build</code> s'arrête au commit local, sans push, sans PR et sans déploiement.</td><td><span class="pill bad">Absent</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <span class="eyebrow">Skill par skill</span>
+      <h2>Avantages et inconvénients</h2>
+      <p class="lede">Une fiche par skill que tu as lancée, dans l'ordre où elles alimentent la suivante.</p>
+    </div>
+    <div class="skills">
+
+      <article class="skill">
+        <div class="id">
+          <span class="name">bmad-forge-idea</span>
+          <span class="stagep">Avant l'étape 01. Pas d'équivalent dans la présentation.</span>
+          <span class="path">forge-ado-yaml-importer/</span>
+        </div>
+        <div class="body">
+          <div class="col pro"><span class="label">Avantages</span><ul>
+            <li>Met l'idée à l'épreuve avant d'écrire un PRD.</li>
+            <li>Garde les options rejetées et leurs raisons.</li>
+            <li>Sortie très courte, qui sert directement d'entrée à <code>spec</code> ou <code>prd</code>.</li>
+          </ul></div>
+          <div class="col con"><span class="label">Inconvénients</span><ul>
+            <li>Une étape de plus, utile seulement pour une idée floue.</li>
+            <li>Chevauche le PRD : <code>reconcile-forge.md</code> a été nécessaire.</li>
+          </ul></div>
+        </div>
+      </article>
+
+      <article class="skill">
+        <div class="id">
+          <span class="name">bmad-deep-recon</span>
+          <span class="stagep">Étape 01, la « research phase » de la diapo 9.</span>
+          <span class="path">research-azure-devops-rest-api-work-item-import/</span>
+        </div>
+        <div class="body">
+          <div class="col pro"><span class="label">Avantages</span><ul>
+            <li>Applique exactement la diapo 9 : lire la documentation primaire de l'API et consigner les résultats.</li>
+            <li>Va plus loin qu'un <code>research.md</code> : <code>digests/</code>, <code>imports/</code>, briefing HTML, sources citées.</li>
+            <li>Le plan du spike s'appuie dessus dans sa Code Map.</li>
+          </ul></div>
+          <div class="col con"><span class="label">Inconvénients</span><ul>
+            <li>Ne remplace pas l'essai réel : 4 faits (Q1 à Q4) ne s'établissent que sur une vraie organisation ADO.</li>
+            <li>Rien n'oblige à vérifier la source avant de bâtir dessus.</li>
+            <li>Rendu lourd par rapport à un simple fichier de notes.</li>
+          </ul></div>
+        </div>
+      </article>
+
+      <article class="skill">
+        <div class="id">
+          <span class="name">bmad-prd</span>
+          <span class="stagep">Étape 01 : quoi, pourquoi, pour qui, dans et hors du périmètre.</span>
+          <span class="path">prd-ado-yaml-importer/</span>
+        </div>
+        <div class="body">
+          <div class="col pro"><span class="label">Avantages</span><ul>
+            <li>Correspond directement au PRD de la diapo 9.</li>
+            <li>Réconcilie ses sources par écrit : <code>reconcile-forge.md</code>, <code>reconcile-research.md</code>, <code>reconcile-spec.md</code>.</li>
+            <li>Livré avec une rubrique de revue (<code>review-rubric.md</code>).</li>
+          </ul></div>
+          <div class="col con"><span class="label">Inconvénients</span><ul>
+            <li>Fait doublon avec <code>bmad-spec</code> : pour un dev seul ou une petite équipe, BMad conseille d'aller directement à la spec.</li>
+            <li>Trois fichiers de réconciliation montrent le coût de plusieurs documents de besoins à garder alignés.</li>
+          </ul></div>
+        </div>
+      </article>
+
+      <article class="skill">
+        <div class="id">
+          <span class="name">bmad-spec</span>
+          <span class="stagep">Étape 01. Le pivot de toute la chaîne BMad.</span>
+          <span class="path">spec-ado-yaml-importer/</span>
+        </div>
+        <div class="body">
+          <div class="col pro"><span class="label">Avantages</span><ul>
+            <li>Contrat court et stable, avec des identifiants <code>CAP-N</code> que les tickets citent (<code>covers = ["CAP-5", "CAP-8"]</code>).</li>
+            <li>Traçabilité du besoin jusqu'à la tâche, absente de la présentation.</li>
+            <li>Les compagnons (<code>cli-contract.md</code>, <code>file-formats.md</code>) gardent le détail hors du noyau.</li>
+            <li>Le <code>.memlog.md</code>, où l'on ne fait qu'ajouter, permet de lancer PRD, architecture et UX dans n'importe quel ordre.</li>
+          </ul></div>
+          <div class="col con"><span class="label">Inconvénients</span><ul>
+            <li>La spec ne se modifie pas à la main : <code>bmad-spec</code> en est le seul auteur.</li>
+            <li>Ne trouve pas seule les autres artefacts : il faut les lui donner.</li>
+            <li>Aucun test de non-régression du rendu (pas de <code>cases.json</code>).</li>
+          </ul></div>
+        </div>
+      </article>
+
+      <article class="skill">
+        <div class="id">
+          <span class="name">bmad-architecture</span>
+          <span class="stagep">Étape 02 : ADR et décisions difficiles à défaire.</span>
+          <span class="path">architecture-ado-yaml-importer/</span>
+        </div>
+        <div class="body">
+          <div class="col pro"><span class="label">Avantages</span><ul>
+            <li>Décisions numérotées (<code>AD-20</code>…), l'équivalent des ADR, citées ensuite par les tickets et les plans.</li>
+            <li>Dossier <code>reviews/</code> pour remettre les choix en question, comme le conseille la diapo 10.</li>
+            <li>L'altitude (initiative, epic) évite de trop concevoir.</li>
+          </ul></div>
+          <div class="col con"><span class="label">Inconvénients</span><ul>
+            <li>Pas de contrôle dédié pour la sécurité, le schéma ou l'authentification : même approbation que le reste.</li>
+            <li>Les conventions de code relèvent de <code>bmad-project-context</code>, que tu n'as pas lancé. L'agent d'implémentation n'a donc aucune règle écrite sur les patterns à suivre.</li>
+          </ul></div>
+        </div>
+      </article>
+
+      <article class="skill">
+        <div class="id">
+          <span class="name">bmad-ticket</span>
+          <span class="stagep">Étape 03 : découper en tâches bornées.</span>
+          <span class="path">epic-wi-import-poc/tickets.toml</span>
+        </div>
+        <div class="body">
+          <div class="col pro"><span class="label">Avantages</span><ul>
+            <li>Chaque entrée porte <code>description</code>, <code>verify</code>, <code>after</code>, <code>risk</code>, <code>hitl</code> et <code>covers</code> : tâches bornées avec dépendances et critères.</li>
+            <li>Le découpage est relu (<code>review-breakdown.md</code>) avant le build, comme la présentation le demande.</li>
+            <li>Le type <code>spike</code> lève les inconnues en premier.</li>
+          </ul></div>
+          <div class="col con"><span class="label">Inconvénients</span><ul>
+            <li>Format propre à BMad. Pour aller vers Azure DevOps, il faut passer par <code>help/ticketing-setup.md</code>.</li>
+            <li>Une seule file d'attente, car les entrées touchent les mêmes fichiers : pas d'agents en parallèle.</li>
+          </ul></div>
+        </div>
+      </article>
+
+      <article class="skill">
+        <div class="id">
+          <span class="name">bmad-build</span>
+          <span class="stagep">Étapes 04 et 05 : brief, code, revue.</span>
+          <span class="path">spike-essai-d-api-sur-les-projets-de-test-plan.md</span>
+        </div>
+        <div class="body">
+          <div class="col pro"><span class="label">Avantages</span><ul>
+            <li>Le plan suit à la lettre le « good brief » de la diapo 12.</li>
+            <li>Le subagent d'implémentation part sans contexte : le plan est sa seule source de vérité.</li>
+            <li>Revue indépendante : plusieurs reviewers, chaque constat vérifié dans le code puis classé (patch, intent_gap, bad_plan, defer).</li>
+            <li>Rigueur ajustable (<code>oneshot</code> ou <code>full</code>), reprise possible grâce au <code>status</code> du plan.</li>
+          </ul></div>
+          <div class="col con"><span class="label">Inconvénients</span><ul>
+            <li>Procédure lourde : 13 Ko de revue pour le plan d'un script jetable.</li>
+            <li>Coûteux en tokens : plusieurs subagents et plusieurs lenses.</li>
+            <li>S'arrête au commit local : pas de push, pas de PR, pas de déploiement.</li>
+          </ul></div>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <span class="eyebrow">Ce qui manque</span>
+      <h2>Les trous par rapport à la présentation</h2>
+    </div>
+    <div class="gaps">
+      <div class="gapcard">
+        <h3>06 · Deploy</h3>
+        <p><code>bmad-architecture</code> fixe les décisions d'hébergement et de déploiement, mais aucune skill ne prépare la pipeline, le déploiement progressif ou le retour arrière. <code>bmad-build</code> refuse même de pousser. La présentation veut un agent qui prépare la CI/CD et un humain qui approuve.</p>
+      </div>
+      <div class="gapcard">
+        <h3>07 · Monitor</h3>
+        <p>Rien sur le suivi des erreurs, l'uptime, les alertes ou les logs. <code>bmad-retrospective</code> porte sur le déroulement du travail, pas sur la production.</p>
+      </div>
+      <div class="gapcard soft">
+        <h3>Prototype jetable</h3>
+        <p>BMad le recommande dans <code>help/prototyping.md</code> sans skill dédiée. C'est cohérent avec la présentation, qui le traite aussi comme du code à jeter.</p>
+      </div>
+      <div class="gapcard soft">
+        <h3>Conventions du projet</h3>
+        <p><code>bmad-project-context</code> existe mais n'a pas été lancé. Le <code>CONVENTIONS.md</code> de la diapo 10 n'a donc pas d'équivalent dans ton dépôt.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <span class="eyebrow">Synthèse</span>
+      <h2>En une ligne chacun</h2>
+    </div>
+    <div class="verdict">
+      <div class="plus">
+        <span class="big">+</span>
+        <h3>Ce que BMad ajoute</h3>
+        <p>Une traçabilité de bout en bout (CAP-N → AD-N → ticket → plan), une revue indépendante et vérifiée, et une mémoire écrite des décisions.</p>
+      </div>
+      <div class="cost">
+        <span class="big">≈</span>
+        <h3>Ce que BMad coûte</h3>
+        <p>Beaucoup de documents à garder alignés (forge, PRD, research, spec) et une procédure lourde pour les petites tâches, comme ton spike jetable.</p>
+      </div>
+      <div class="miss">
+        <span class="big">5/7</span>
+        <h3>Ce qui lui manque</h3>
+        <p>Deploy n'a que les décisions d'architecture et Monitor n'a rien. Les deux restent à faire à la main ou avec d'autres outils.</p>
+      </div>
+    </div>
+  </section>
+
+  </div>
+
+  <div class="panel" id="panel-plus" role="tabpanel" aria-labelledby="tab-plus" hidden>
+
+  <section>
+    <div class="section-head">
+      <span class="eyebrow">Pour aller plus loin</span>
+      <h2>Ce que fait BMad à chaque étape, et les skills qui manquent</h2>
+      <p class="lede">Pour chaque étape : les skills existantes avec leur entrée et leur sortie, puis des idées de skills qui vont plus loin que la présentation. Les sorties sont écrites dans <code>{output_folder}/{active_initiative}/</code> sauf mention contraire.</p>
+    </div>
+    <div class="filter" role="group" aria-label="Filtrer les idées par public">
+      <span>Idées utiles pour :</span>
+      <button type="button" data-filter="all" aria-pressed="true">Tous</button>
+      <button type="button" data-filter="dev" aria-pressed="false">Dev</button>
+      <button type="button" data-filter="pm" aria-pressed="false">Product manager</button>
+      <button type="button" data-filter="test" aria-pressed="false">Testeur</button>
+    </div>
+  </section>
+
+  <section class="stage-block">
+    <div class="stage-title"><span class="num">01</span><h2>Requirements</h2></div>
+    <span class="sub">Ce que fait BMad</span>
+    <div class="table-wrap"><table class="does">
+      <thead><tr><th>Skill</th><th>Entrée</th><th>Sortie</th></tr></thead>
+      <tbody>
+        <tr><td>bmad-brainstorming</td><td>un sujet</td><td>rapport de session, idées triées</td></tr>
+        <tr><td>bmad-forge-idea</td><td>une idée encore floue</td><td><code>forge-&lt;slug&gt;/</code> : décisions, options rejetées et raisons</td></tr>
+        <tr><td>bmad-deep-recon</td><td>une question à trancher (marché, domaine, technique, concurrence, utilisateurs)</td><td><code>research-&lt;slug&gt;/</code> : synthèse avec sources citées, digests ; ou un prompt à lancer dans un autre outil</td></tr>
+        <tr><td>bmad-product-brief</td><td>idée, notes</td><td><code>brief-&lt;slug&gt;/</code>, 1 à 2 pages</td></tr>
+        <tr><td>bmad-prfaq</td><td>un concept produit</td><td><code>prfaq-&lt;slug&gt;/</code> : communiqué de presse, FAQ difficile, verdict</td></tr>
+        <tr><td>bmad-prd</td><td>brief, notes, recherche, UX</td><td><code>prd-&lt;slug&gt;/</code>, avec addendum et validation</td></tr>
+        <tr><td>bmad-spec</td><td>n'importe quoi : PRD, brief, transcript, notes</td><td><code>spec-&lt;slug&gt;/</code> : noyau en 5 champs avec des <code>CAP-N</code>, companions, <code>.memlog.md</code></td></tr>
+      </tbody>
+    </table></div>
+    <span class="sub">Idées</span>
+    <div class="ideas">
+      <article class="idea" data-who="pm test">
+        <div class="head"><span class="name">bmad-acceptance-examples</span><div class="who"><b class="pm">PM</b><b class="test">Test</b></div></div>
+        <dl>
+          <div><dt>Entrée</dt><dd>La spec et ses <code>CAP-N</code>.</dd></div>
+          <div><dt>Sortie</dt><dd>Un companion <code>examples.md</code> : par capacité, les règles, des exemples concrets en Given/When/Then et les questions ouvertes.</dd></div>
+          <div class="beyond"><dt>Plus loin que la présentation</dt><dd>PM et testeur valident des exemples testables avant le code, et <code>bmad-build</code> les reprend dans sa matrice I/O.</dd></div>
+        </dl>
+      </article>
+      <article class="idea" data-who="dev">
+        <div class="head"><span class="name">bmad-claim-probe</span><div class="who"><b class="dev">Dev</b></div></div>
+        <dl>
+          <div><dt>Entrée</dt><dd>Les affirmations d'un dossier <code>research-*</code> : endpoints, versions, comportements.</dd></div>
+          <div><dt>Sortie</dt><dd>Un script de sonde jetable et un registre <code>claims.md</code> : chaque affirmation vérifiée, réfutée ou non testée, avec sa preuve.</dd></div>
+          <div class="beyond"><dt>Plus loin que la présentation</dt><dd>Le « verify the source » de la diapo 9, automatisé. Ton spike Q1 à Q4 en est la version manuelle.</dd></div>
+        </dl>
+      </article>
+      <article class="idea" data-who="pm">
+        <div class="head"><span class="name">bmad-spec-digest</span><div class="who"><b class="pm">PM</b></div></div>
+        <dl>
+          <div><dt>Entrée</dt><dd>Le <code>.memlog.md</code> de la spec, depuis une date.</dd></div>
+          <div><dt>Sortie</dt><dd>Un résumé pour les parties prenantes : décisions prises, questions qui attendent quelqu'un, capacités ajoutées ou retirées.</dd></div>
+          <div class="beyond"><dt>Plus loin que la présentation</dt><dd>Le PM suit l'évolution de la spec sans la relire en entier.</dd></div>
+        </dl>
+      </article>
+    </div>
+    <p class="empty-note" hidden>Aucune idée pour ce public à cette étape.</p>
+  </section>
+
+  <section class="stage-block">
+    <div class="stage-title"><span class="num">02</span><h2>Design</h2></div>
+    <span class="sub">Ce que fait BMad</span>
+    <div class="table-wrap"><table class="does">
+      <thead><tr><th>Skill</th><th>Entrée</th><th>Sortie</th></tr></thead>
+      <tbody>
+        <tr><td>bmad-ux</td><td>spec, PRD ou idée</td><td><code>ux-&lt;slug&gt;/</code> : <code>DESIGN.md</code>, <code>EXPERIENCE.md</code>, maquettes</td></tr>
+        <tr><td>bmad-architecture</td><td>spec, idée ou code existant</td><td><code>architecture-&lt;slug&gt;/</code> : décisions <code>AD-N</code>, starter, hébergement et déploiement, <code>.memlog.md</code></td></tr>
+        <tr><td>bmad-project-context</td><td>le dépôt, les erreurs observées des agents</td><td>un bloc de règles vérifiées dans <code>{project-root}/AGENTS.md</code></td></tr>
+      </tbody>
+    </table></div>
+    <span class="sub">Idées</span>
+    <div class="ideas">
+      <article class="idea" data-who="dev test">
+        <div class="head"><span class="name">bmad-threat-model</span><div class="who"><b class="dev">Dev</b><b class="test">Test</b></div></div>
+        <dl>
+          <div><dt>Entrée</dt><dd>L'architecture (<code>AD-N</code>) et les companions de la spec.</dd></div>
+          <div><dt>Sortie</dt><dd>Les menaces par flux (STRIDE), les mitigations transformées en tickets, les cas de test sécurité.</dd></div>
+          <div class="beyond"><dt>Plus loin que la présentation</dt><dd>La diapo 10 dit seulement de ralentir sur l'auth et les données. Tes skills <code>architecture-extraction</code> et <code>tm7-*</code> fournissent déjà les briques.</dd></div>
+        </dl>
+      </article>
+      <article class="idea" data-who="dev pm">
+        <div class="head"><span class="name">bmad-one-way-doors</span><div class="who"><b class="dev">Dev</b><b class="pm">PM</b></div></div>
+        <dl>
+          <div><dt>Entrée</dt><dd>Les décisions <code>AD-N</code>.</dd></div>
+          <div><dt>Sortie</dt><dd>Chaque décision classée par coût de retour arrière. Une décision irréversible exige une validation humaine nommée, enregistrée dans le memlog.</dd></div>
+          <div class="beyond"><dt>Plus loin que la présentation</dt><dd>La présentation recommande de ralentir sur ces décisions ; ici, c'est une règle appliquée.</dd></div>
+        </dl>
+      </article>
+      <article class="idea" data-who="dev test">
+        <div class="head"><span class="name">bmad-contract-first</span><div class="who"><b class="dev">Dev</b><b class="test">Test</b></div></div>
+        <dl>
+          <div><dt>Entrée</dt><dd>Un companion de contrat, comme ton <code>cli-contract.md</code>, ou une API.</dd></div>
+          <div><dt>Sortie</dt><dd>Un schéma machine (OpenAPI, JSON Schema) et des tests de contrat qui échouent tant que le code n'existe pas.</dd></div>
+          <div class="beyond"><dt>Plus loin que la présentation</dt><dd>Le contrat devient vérifiable dès le design.</dd></div>
+        </dl>
+      </article>
+    </div>
+    <p class="empty-note" hidden>Aucune idée pour ce public à cette étape.</p>
+  </section>
+
+  <section class="stage-block">
+    <div class="stage-title"><span class="num">03</span><h2>Plan</h2></div>
+    <span class="sub">Ce que fait BMad</span>
+    <div class="table-wrap"><table class="does">
+      <thead><tr><th>Skill</th><th>Entrée</th><th>Sortie</th></tr></thead>
+      <tbody>
+        <tr><td>bmad-ticket</td><td>spec, architecture, UX</td><td>l'arbre de tickets : <code>epic-*/epic-*.md</code>, <code>tickets.toml</code> (<code>description</code>, <code>verify</code>, <code>after</code>, <code>risk</code>, <code>hitl</code>, <code>covers</code>), <code>backlog/</code> pour les bugs, tracker optionnel</td></tr>
+        <tr><td>bmad-correct-course</td><td>un changement important en cours de route, avec un PRD ou une spec</td><td><code>change-&lt;slug&gt;/</code> : impacts sur les epics et les stories</td></tr>
+      </tbody>
+    </table></div>
+    <span class="sub">Idées</span>
+    <div class="ideas">
+      <article class="idea" data-who="test">
+        <div class="head"><span class="name">bmad-test-strategy</span><div class="who"><b class="test">Test</b></div></div>
+        <dl>
+          <div><dt>Entrée</dt><dd>La spec, l'architecture et <code>tickets.toml</code>.</dd></div>
+          <div><dt>Sortie</dt><dd>Par ticket : niveaux de test, données et environnements nécessaires, priorité selon le <code>risk</code>. Les champs <code>verify</code> sont précisés.</dd></div>
+          <div class="beyond"><dt>Plus loin que la présentation</dt><dd>Le testeur intervient au découpage, pas après le code.</dd></div>
+        </dl>
+      </article>
+      <article class="idea" data-who="pm test">
+        <div class="head"><span class="name">bmad-traceability</span><div class="who"><b class="pm">PM</b><b class="test">Test</b></div></div>
+        <dl>
+          <div><dt>Entrée</dt><dd>Toute l'initiative.</dd></div>
+          <div><dt>Sortie</dt><dd>Une matrice <code>CAP-N</code> → <code>AD-N</code> → tickets → plans → tests → commits, qui signale :
+            <ul><li>les capacités sans ticket ;</li><li>les critères sans test ;</li><li>les tickets sans capacité.</li></ul></dd></div>
+          <div class="beyond"><dt>Plus loin que la présentation</dt><dd>Une vue de couverture que ni la présentation ni BMad ne donnent aujourd'hui.</dd></div>
+        </dl>
+      </article>
+      <article class="idea" data-who="pm">
+        <div class="head"><span class="name">bmad-forecast</span><div class="who"><b class="pm">PM</b></div></div>
+        <dl>
+          <div><dt>Entrée</dt><dd>Les plans terminés : <code>risk</code>, <code>review_loop_iteration</code>, dates de commit.</dd></div>
+          <div><dt>Sortie</dt><dd>Une prévision de fin d'epic sous forme de fourchette, et les tickets qui dérapent.</dd></div>
+          <div class="beyond"><dt>Plus loin que la présentation</dt><dd>La prévision s'appuie sur l'historique réel des builds plutôt que sur des estimations.</dd></div>
+        </dl>
+      </article>
+    </div>
+    <p class="empty-note" hidden>Aucune idée pour ce public à cette étape.</p>
+  </section>
+
+  <section class="stage-block">
+    <div class="stage-title"><span class="num">04</span><h2>Build</h2></div>
+    <span class="sub">Ce que fait BMad</span>
+    <div class="table-wrap"><table class="does">
+      <thead><tr><th>Skill</th><th>Entrée</th><th>Sortie</th></tr></thead>
+      <tbody>
+        <tr><td>bmad-build</td><td>texte libre, un ticket (ou le suivant prêt), un fichier</td><td>le plan à côté de <code>tickets.toml</code> (ou <code>plan-&lt;slug&gt;.md</code>), le code, un commit local, <code>deferred-work.md</code></td></tr>
+        <tr><td>bmad-build-auto</td><td>un ticket, lancé par une boucle ou un script</td><td>la même chose, sans humain</td></tr>
+        <tr><td>bmad-agent-dev</td><td>une conversation</td><td>accompagne build, tests, revue et board</td></tr>
+      </tbody>
+    </table></div>
+    <span class="sub">Idées</span>
+    <div class="ideas">
+      <article class="idea" data-who="dev test">
+        <div class="head"><span class="name">bmad-test-first</span><div class="who"><b class="dev">Dev</b><b class="test">Test</b></div></div>
+        <dl>
+          <div><dt>Entrée</dt><dd>Le plan approuvé : matrice I/O et critères d'acceptation.</dd></div>
+          <div><dt>Sortie</dt><dd>Des tests qui échouent, écrits avant l'implémentation et figés. L'implémenteur ne peut pas modifier les attentes.</dd></div>
+          <div class="beyond"><dt>Plus loin que la présentation</dt><dd>Le « Matrix Test Audit » de <code>bmad-build</code> vérifie les tests après coup ; ici, le testeur fixe le résultat attendu avant le code.</dd></div>
+        </dl>
+      </article>
+      <article class="idea" data-who="dev pm">
+        <div class="head"><span class="name">bmad-pr-pack</span><div class="who"><b class="dev">Dev</b><b class="pm">PM</b></div></div>
+        <dl>
+          <div><dt>Entrée</dt><dd>Un plan au statut <code>built</code>.</dd></div>
+          <div><dt>Sortie</dt><dd>Branche poussée et PR (GitHub ou ADO) dont la description vient du plan : Intent, critères, risque, triage de revue, liens vers le ticket et les <code>CAP-N</code>.</dd></div>
+          <div class="beyond"><dt>Plus loin que la présentation</dt><dd>Comble l'arrêt au commit local, sans retaper le contexte.</dd></div>
+        </dl>
+      </article>
+    </div>
+    <p class="empty-note" hidden>Aucune idée pour ce public à cette étape.</p>
+  </section>
+
+  <section class="stage-block">
+    <div class="stage-title"><span class="num">05</span><h2>Review</h2></div>
+    <span class="sub">Ce que fait BMad</span>
+    <div class="table-wrap"><table class="does">
+      <thead><tr><th>Skill</th><th>Entrée</th><th>Sortie</th></tr></thead>
+      <tbody>
+        <tr><td>bmad-build · step 4</td><td>le diff depuis <code>baseline_revision</code> et le plan</td><td>Review Triage Log, corrections, entrées dans <code>deferred-work.md</code></td></tr>
+        <tr><td>bmad-code-review</td><td>un diff, une PR, une branche</td><td>section <code>## Code Review</code> dans le plan, ou dans le chat</td></tr>
+        <tr><td>bmad-review</td><td>code ou documents</td><td>constats triés par lens : adversarial, cas limites, trous de vérification, structure, prose</td></tr>
+        <tr><td>bmad-walkthrough</td><td>un commit, une PR, un dossier</td><td><code>walkthrough-&lt;slug&gt;/</code> : récit et journal de la revue humaine guidée</td></tr>
+        <tr><td>bmad-qa-generate-e2e-tests</td><td>une fonctionnalité existante</td><td>tests dans <code>{project-root}/tests</code>, <code>test-summary-&lt;slug&gt;.md</code></td></tr>
+        <tr><td>bmad-retrospective</td><td>un dossier d'epic terminé</td><td><code>epic-&lt;slug&gt;-retrospective.md</code> : constats, actions, décision d'acceptation</td></tr>
+      </tbody>
+    </table></div>
+    <span class="sub">Idées</span>
+    <div class="ideas">
+      <article class="idea" data-who="pm">
+        <div class="head"><span class="name">bmad-acceptance-demo</span><div class="who"><b class="pm">PM</b></div></div>
+        <dl>
+          <div><dt>Entrée</dt><dd>Un plan <code>built</code> et ses critères d'acceptation.</dd></div>
+          <div><dt>Sortie</dt><dd>Un script de démo pas à pas, une capture ou une sortie par critère, et la validation du PM enregistrée dans le plan.</dd></div>
+          <div class="beyond"><dt>Plus loin que la présentation</dt><dd>La présentation s'arrête à la revue de code ; ici, le PM valide le comportement livré.</dd></div>
+        </dl>
+      </article>
+      <article class="idea" data-who="dev test">
+        <div class="head"><span class="name">bmad-mutation-check</span><div class="who"><b class="dev">Dev</b><b class="test">Test</b></div></div>
+        <dl>
+          <div><dt>Entrée</dt><dd>Le diff et ses tests.</dd></div>
+          <div><dt>Sortie</dt><dd>Un score de mutation sur les lignes modifiées, les mutants survivants et les tests à ajouter.</dd></div>
+          <div class="beyond"><dt>Plus loin que la présentation</dt><dd>Mesure si les tests détectent vraiment les bugs, au lieu de seulement vérifier qu'ils existent.</dd></div>
+        </dl>
+      </article>
+      <article class="idea" data-who="test">
+        <div class="head"><span class="name">bmad-exploratory-charter</span><div class="who"><b class="test">Test</b></div></div>
+        <dl>
+          <div><dt>Entrée</dt><dd>Le diff, le <code>risk</code> et la matrice I/O.</dd></div>
+          <div><dt>Sortie</dt><dd>Des chartes de test exploratoire limitées dans le temps (« explorer X avec Y pour découvrir Z ») et un journal de session ; les bugs trouvés vont dans <code>backlog/</code>.</dd></div>
+          <div class="beyond"><dt>Plus loin que la présentation</dt><dd>L'expertise du testeur est orientée par le risque réel du changement.</dd></div>
+        </dl>
+      </article>
+    </div>
+    <p class="empty-note" hidden>Aucune idée pour ce public à cette étape.</p>
+  </section>
+
+  <section class="stage-block">
+    <div class="stage-title"><span class="num">06</span><h2>Deploy</h2></div>
+    <span class="sub">Ce que fait BMad</span>
+    <div class="table-wrap"><table class="does">
+      <thead><tr><th>Skill</th><th>Entrée</th><th>Sortie</th></tr></thead>
+      <tbody>
+        <tr><td>bmad-architecture</td><td>spec, idée ou code existant</td><td>les décisions d'hébergement et de déploiement, sans exécution</td></tr>
+        <tr class="none"><td colspan="3">Aucune skill ne prépare ni n'exécute une mise en production.</td></tr>
+      </tbody>
+    </table></div>
+    <span class="sub">Idées</span>
+    <div class="ideas">
+      <article class="idea" data-who="dev pm">
+        <div class="head"><span class="name">bmad-release-plan</span><div class="who"><b class="dev">Dev</b><b class="pm">PM</b></div></div>
+        <dl>
+          <div><dt>Entrée</dt><dd>Les tickets <code>built</code> ou <code>done</code> depuis la dernière version.</dd></div>
+          <div><dt>Sortie</dt><dd><code>release-&lt;version&gt;/</code> :
+            <ul><li>notes de version pour les utilisateurs et pour les techniciens ;</li><li>migrations ;</li><li>déploiement progressif et plan de retour arrière ;</li><li>checklist go/no-go avec la décision humaine.</li></ul></dd></div>
+          <div class="beyond"><dt>Plus loin que la présentation</dt><dd>La diapo 14 (revoir déploiement et retour arrière avant l'approbation) devient un document.</dd></div>
+        </dl>
+      </article>
+      <article class="idea" data-who="dev">
+        <div class="head"><span class="name">bmad-pipeline</span><div class="who"><b class="dev">Dev</b></div></div>
+        <dl>
+          <div><dt>Entrée</dt><dd>Les décisions de déploiement de l'architecture et le dépôt.</dd></div>
+          <div><dt>Sortie</dt><dd>Une pipeline CI/CD (Azure Pipelines, GitHub Actions) avec ses étapes de validation, ou la revue d'une pipeline existante.</dd></div>
+          <div class="beyond"><dt>Plus loin que la présentation</dt><dd>L'agent prépare, l'humain approuve, comme le veut la présentation.</dd></div>
+        </dl>
+      </article>
+    </div>
+    <p class="empty-note" hidden>Aucune idée pour ce public à cette étape.</p>
+  </section>
+
+  <section class="stage-block">
+    <div class="stage-title"><span class="num">07</span><h2>Monitor</h2></div>
+    <span class="sub">Ce que fait BMad</span>
+    <div class="table-wrap"><table class="does">
+      <tbody>
+        <tr class="none"><td colspan="3">Aucune skill ne concerne la production.</td></tr>
+      </tbody>
+    </table></div>
+    <span class="sub">Idées</span>
+    <div class="ideas">
+      <article class="idea" data-who="dev test">
+        <div class="head"><span class="name">bmad-observability-plan</span><div class="who"><b class="dev">Dev</b><b class="test">Test</b></div></div>
+        <dl>
+          <div><dt>Entrée</dt><dd>Le « Success signal » de la spec et les modes de défaillance de l'architecture.</dd></div>
+          <div><dt>Sortie</dt><dd>Objectifs de service (SLI/SLO), alertes avec leur responsable, événements de log sans données sensibles, tableau de bord, et un test qui déclenche chaque alerte.</dd></div>
+          <div class="beyond"><dt>Plus loin que la présentation</dt><dd>La présentation demande de tester le chemin d'alerte ; ici, c'est un livrable.</dd></div>
+        </dl>
+      </article>
+      <article class="idea" data-who="dev pm">
+        <div class="head"><span class="name">bmad-incident-to-ticket</span><div class="who"><b class="dev">Dev</b><b class="pm">PM</b></div></div>
+        <dl>
+          <div><dt>Entrée</dt><dd>Une erreur de production, un incident ou un retour utilisateur.</dd></div>
+          <div><dt>Sortie</dt><dd>Un bug dans <code>backlog/</code> avec reproduction, sévérité et <code>CAP-N</code> concerné. Si le besoin était faux, une entrée dans le memlog de la spec.</dd></div>
+          <div class="beyond"><dt>Plus loin que la présentation</dt><dd>La présentation est linéaire ; ici, la production réalimente la spec et le backlog.</dd></div>
+        </dl>
+      </article>
+      <article class="idea" data-who="pm">
+        <div class="head"><span class="name">bmad-success-review</span><div class="who"><b class="pm">PM</b></div></div>
+        <dl>
+          <div><dt>Entrée</dt><dd>Le « Success signal » de la spec et les données réelles d'usage.</dd></div>
+          <div><dt>Sortie</dt><dd>Un verdict par capacité (atteint, partiel, raté) et une proposition : garder, ajuster ou retirer.</dd></div>
+          <div class="beyond"><dt>Plus loin que la présentation</dt><dd>Mesure si le produit a atteint son objectif, pas seulement s'il fonctionne.</dd></div>
+        </dl>
+      </article>
+    </div>
+    <p class="empty-note" hidden>Aucune idée pour ce public à cette étape.</p>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <span class="eyebrow">Priorités</span>
+      <h2>Les 3 idées les plus utiles pour toi</h2>
+      <p class="lede">Pour en créer une, <code>bmad-toolsmith</code> la construit et <code>bmad-eval</code> la mesure.</p>
+    </div>
+    <div class="top3">
+      <div><span class="rank">1</span><span class="name">bmad-traceability</span><p>Une seule vue pour le PM et le testeur, sans changer le reste de la chaîne.</p></div>
+      <div><span class="rank">2</span><span class="name">bmad-test-first</span><p>Le testeur fixe le résultat attendu avant le code. C'est le gain le plus net en qualité.</p></div>
+      <div><span class="rank">3</span><span class="name">bmad-release-plan</span><p>Comble le trou le plus visible, Deploy, et sert à la fois au Dev et au PM.</p></div>
+    </div>
+  </section>
+
+  </div>
+
+  <footer>
+    Construit à partir des fichiers SKILL.md du dépôt BMAD-METHOD, des artefacts de <span class="mono">wi-bmad</span> et de la présentation « Stop Vibe Coding: AI Development Workflow ».
+  </footer>
+</div>
+<script>
+(function () {
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('[role="tab"]'));
+  function show(tab, focus) {
+    tabs.forEach(function (t) {
+      var on = t === tab;
+      t.setAttribute('aria-selected', on ? 'true' : 'false');
+      t.tabIndex = on ? 0 : -1;
+      document.getElementById(t.getAttribute('aria-controls')).hidden = !on;
+    });
+    if (focus) tab.focus();
+    try { history.replaceState(null, '', tab.id === 'tab-plus' ? '#plus' : '#comparaison'); } catch (e) {}
+  }
+  tabs.forEach(function (t, i) {
+    t.addEventListener('click', function () { show(t, false); });
+    t.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+        var next = tabs[(i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length];
+        show(next, true);
+        e.preventDefault();
+      }
+    });
+  });
+  if (location.hash === '#plus') show(document.getElementById('tab-plus'), false);
+
+  var buttons = Array.prototype.slice.call(document.querySelectorAll('[data-filter]'));
+  buttons.forEach(function (b) {
+    b.addEventListener('click', function () {
+      var f = b.getAttribute('data-filter');
+      buttons.forEach(function (o) { o.setAttribute('aria-pressed', o === b ? 'true' : 'false'); });
+      document.querySelectorAll('.stage-block').forEach(function (block) {
+        var visible = 0;
+        block.querySelectorAll('.idea').forEach(function (card) {
+          var on = f === 'all' || card.getAttribute('data-who').split(' ').indexOf(f) !== -1;
+          card.hidden = !on;
+          if (on) visible++;
+        });
+        var note = block.querySelector('.empty-note');
+        if (note) note.hidden = visible > 0;
+      });
+    });
+  });
+})();
+</script>
+</body>
+</html>
